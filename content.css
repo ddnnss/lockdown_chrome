@@ -1,0 +1,60 @@
+.ext-modal-window-fon{
+    left: 0;
+    top: 0;
+    height: 100%;
+    position: fixed;
+    width: 100%;
+    z-index: 999;
+    display: block;
+    background-color: #fdfdfe;
+    opacity: 0.8;
+}
+
+.ext-modal-window{
+    padding: 10px 20px;
+    background-color: white;
+    border: 1px solid black;
+    position: fixed;
+    width: 400px;
+    left: 50%;
+    top: 50%;
+    margin-left: -190px;
+    margin-top: -80px;
+
+    z-index: 1000;
+}
+
+.ext-modal-window .ext-modal-window-grid{
+    display: grid;
+    grid-template-areas:
+            "text text"
+            "time time"
+            "btn-ok btn-ok";
+    font-size: 18px;
+    padding: 0 30px;
+}
+
+.ext-modal-window .ext-modal-window-grid .ext-modal-window-text{
+    grid-area: text;
+    justify-self: center;
+    margin-bottom: 0;
+    margin-top: 10px;
+}
+
+.ext-modal-window .ext-modal-window-grid .ext-modal-display-time{
+    grid-area: time;
+    justify-self: center;
+}
+.ext-modal-window .ext-modal-window-grid .ext-modal-window-btn-ok{
+    grid-area: btn-ok;
+    padding: 10px 20px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    cursor: pointer;
+    justify-self: center;
+    width: min-content;
+}
+
+
+.ext-modal-window .ext-modal-window-grid .ext-modal-window-btn-ok:hover {
+    opacity: 0.7;
+}

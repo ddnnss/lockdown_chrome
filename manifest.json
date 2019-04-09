@@ -1,0 +1,35 @@
+{
+    "manifest_version": 2,
+ 
+    "name": "Lockdown",
+    "description": "Lockdown",
+    "version": "1.8",
+ 
+    "browser_action": {
+        "default_icon": "icon.png"
+    },
+
+    "permissions": [
+        "activeTab",
+        "tabs",
+        "storage",
+        "management",
+        "<all_urls>"
+    ],
+    "background": {
+        "scripts": ["background.js"]
+    },
+    "web_accessible_resources": [
+        "content.js",
+        "authinfo.js",
+        "content.css"
+    ],
+    "content_scripts": [
+        {
+            "matches": [ "<all_urls>" ],
+            "js": [ "content.js",
+                    "authinfo.js"],
+            "css": ["content.css"]
+        }
+    ]
+}
