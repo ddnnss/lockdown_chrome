@@ -3,7 +3,7 @@ let key = null;
 let session = 0;
 let sessionUuid = 0;
 const browser = "chrome";
-const launchUrl = 'launch.html';
+const launchUrl = '/downloads/session/';
 let targetUpdateApiUrl = false;
 // const url = "http://prestaging.verificient.com:8102/screencasts/session/" + session + "/extension/chrome/config/";
 // const url = "http://prestaging.verificient.com:8102/screencasts/session/" + session +"/"+ browser + "/"+ extensionId + "/extension/config/";
@@ -97,7 +97,17 @@ let timeOnTabStop = null;
  */
 let isIncognitoAccess = false;
 
+/**
+ * Is authorization info received from authInfoUrl or launchUrl page
+ * @global
+ * @type {boolean}
+ */
 let isAuthInfoReceived = false;
+/**
+ * Is targetUrl form was sent by script
+ * @global
+ * @type {boolean}
+ */
 let isClicked = false;
 
 
@@ -112,36 +122,42 @@ let isClicked = false;
 
 
 
-
+/**
+ * Try to find launchUrl in all open tabs. If found try to get authorization info from authInfoUrl or launchUrl page
+ * @see isAuthInfoReceived
+ * @see launchUrl
+ * @see authInfoUrl
+ */
 function checkLaunch(){
-
     if (!isAuthInfoReceived){
-        fetch(authInfoUrl, {
-            method: 'GET',
-            withCredentials: false
-        }).then(response => {
-            console.log(response);
-            let promise =  response.json();
-            promise.then(data => {
-                // Work with JSON data here
 
-            },error => {
-                console.log('error1',error);
-            })
-        },error => {
-            console.log('fetch :',error);
-            chrome.tabs.query({}, function (tabs) {
-                for (let i in tabs) {
-                    //looking for 'launch.html' in tab url
-                    if (tabs[i].url.indexOf(launchUrl) > 0) {
-                        console.log(tabs[i]);
-                        isAuthInfoReceived = true;
-                        chrome.tabs.executeScript(tabs[i].id, {file: "authinfo.js"});
-                    }
+        chrome.tabs.query({}, function (tabs) {
+            for (let i in tabs) {
+                //looking for launchUrl in tab url
+                if (tabs[i].url.indexOf(launchUrl) > 0) {
+                    console.log(tabs[i]);
+                    fetch(authInfoUrl,{
+                        method: 'GET',
+                        withCredentials: false
+                    }).then(response => {
+                        console.log(response);
+                        let promise =  response.json();
+                        promise.then(data => {
+                            isAuthInfoReceived = true;
+                            // Work with JSON data here
+                            console.log(data);
+                        },error => {
+                            console.log('error1',error);
+                        })
+                    },error => {
+                        //authorization info from launchUrl page html
+                        console.log('get config from html',error);
+
+                         chrome.tabs.executeScript(tabs[i].id, {file: "authinfo.js"});
+                    });
                 }
-            })
-
-        });
+            }
+        })
     }
 }
 
@@ -272,8 +288,8 @@ function updateInfo(isInjectScript = false){
             responseAPI.session_max_duration = responseAPI.session_max_duration * 1000;
             responseAPI.close_open_tabs_warning_duration = responseAPI.close_open_tabs_warning_duration * 1000;
             responseAPI.activity_upload_duration = responseAPI.activity_upload_duration * 1000;
-            targetUrl = responseAPI.target_url;
-            // targetUrl = 'file:///C:/Users/xxx/PycharmProjects/lockdown_chrome/target_url_html.html'
+            // targetUrl = responseAPI.target_url;
+            targetUrl = 'file:///C:/Users/%D1%85%D1%85%D1%85/PycharmProjects/lockdown_chrome/target_url_html.html'
             chrome.storage.sync.set({json_config: data.extension_config}, function () {
                 // console.log('Value is set to ');
             });
@@ -426,10 +442,11 @@ chrome.runtime.onMessage.addListener(
         }
 
         if (request.authInfo){
+            isAuthInfoReceived = true;
             key = request.authInfo.accessToken;
             session = request.authInfo.sessionId;
             targetUpdateApiUrl = request.authInfo.serverUrl + '/';
-            sessionUuid = request.authInfo.sessionId;
+            sessionUuid = request.authInfo.sessionUuid;
             console.log('key= ',key)
             console.log('session= ',session)
             console.log('targetUpdateApiUrl= ',targetUpdateApiUrl)
@@ -437,7 +454,10 @@ chrome.runtime.onMessage.addListener(
             url = targetUpdateApiUrl + "screencasts/session/" + session + "/chrome/ld/extension/config/";
             sendUrl = targetUpdateApiUrl + "screencasts/session/" + session + "/extension/ld/store/activity/";
             bearer = 'Bearer '+ key;
-            chrome.tabs.query({url: targetUpdateApiUrl}, function (tabs) {if (tabs.length > 0) {updateInfo(true);} else {searchTab(true,false);}});
+
+               chrome.tabs.query({url: targetUpdateApiUrl}, function (tabs) {if (tabs.length > 0) {updateInfo(true);} else {searchTab(true,false);}});
+
+
 
         }
 
@@ -465,7 +485,10 @@ chrome.runtime.onMessage.addListener(
 chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
 
     if (changeInfo.status === "complete") {
-        checkLaunch();
+        if(!isAuthInfoReceived){
+           checkLaunch();
+        }
+
         if (allowCollectTabs){
             console.log('onUpdated tabId = ', tab.id);
                 allTabs[tab.id] = Object.assign(tab, {opened: Date.now(), ontab:0, isSent:false});
@@ -525,6 +548,6 @@ function closeAllTabs() {
     }
 }
 
+checkLaunch();
 
 
-checkLaunch()
