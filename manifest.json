@@ -3,7 +3,7 @@
  
     "name": "Lockdown",
     "description": "Lockdown",
-    "version": "1.8",
+    "version": "1.9",
  
     "browser_action": {
         "default_icon": "icon.png"
@@ -21,14 +21,12 @@
     },
     "web_accessible_resources": [
         "content.js",
-        "authinfo.js",
         "content.css"
     ],
     "content_scripts": [
         {
             "matches": [ "<all_urls>" ],
-            "js": [ "content.js",
-                    "authinfo.js"],
+            "js": [ "content.js"],
             "css": ["content.css"]
         }
     ]

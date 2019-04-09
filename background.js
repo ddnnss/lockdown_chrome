@@ -4,14 +4,13 @@ let session = 0;
 let sessionUuid = 0;
 const browser = "chrome";
 const launchUrl = 'launch.html';
-let targetUpdateApiUrl = null;
+let targetUpdateApiUrl = false;
 // const url = "http://prestaging.verificient.com:8102/screencasts/session/" + session + "/extension/chrome/config/";
 // const url = "http://prestaging.verificient.com:8102/screencasts/session/" + session +"/"+ browser + "/"+ extensionId + "/extension/config/";
 const authInfoUrl = 'https://app.verificient.com:54545/proxy_server/app/extension/param/';
-let url = targetUpdateApiUrl + "/screencasts/session/" + session + "/chrome/ld/extension/config/";
-
-let sendUrl = targetUpdateApiUrl + "/screencasts/session/" + session + "/extension/ld/store/activity/";
-const bearer = 'Bearer '+ key;
+let url = false;
+let sendUrl = false;
+let bearer = null;
 /**
  * Tab id for current tab set fullscreen
  * @type {null || int}
@@ -98,26 +97,12 @@ let timeOnTabStop = null;
  */
 let isIncognitoAccess = false;
 
+
+let isAuthInfoReceived = false;
+let isClicked = false;
 // chrome.tabs.query({url: targetUpdateApiUrl}, function (tabs) {if (tabs.length > 0) {updateInfo(true);} else {searchTab(true,false);}});
 
 
-
-
-
-chrome.tabs.query({}, function (tabs) {
-    for (let i in tabs) {
-        //looking for 'launch.html' in tab url
-        if (tabs[i].url.indexOf(launchUrl) > 0) {
-            console.log(tabs[i]);
-            chrome.tabs.executeScript(tabs[i].id, {file: "authinfo.js"});
-        }
-    }
-})
-
-
-
-
-console.log('key1', key);
 
 /**
  * Check if extension allow use in incognito mode
@@ -127,6 +112,42 @@ console.log('key1', key);
 
     console.log('isIncognitoAccess =' ,isIncognitoAccess)
 });
+
+
+
+
+function checkLaunch(){
+
+    if (!isAuthInfoReceived){
+
+        fetch(authInfoUrl, {
+            method: 'GET',
+            withCredentials: false
+        }).then(response => {
+            console.log(response);
+            let promise =  response.json();
+            promise.then(data => {
+                // Work with JSON data here
+
+            },error => {
+                console.log('error1',error);
+            })
+        },error => {
+            console.log('fetch :',error);
+            chrome.tabs.query({}, function (tabs) {
+                for (let i in tabs) {
+                    //looking for 'launch.html' in tab url
+                    if (tabs[i].url.indexOf(launchUrl) > 0) {
+                        console.log(tabs[i]);
+                        isAuthInfoReceived = true;
+                        chrome.tabs.executeScript(tabs[i].id, {file: "authinfo.js"});
+                    }
+                }
+            })
+
+        });
+    }
+}
 
 
 /**
@@ -237,6 +258,7 @@ function setEnabledExtension(enabled) {
 }
 
 function updateInfo(isInjectScript = false){
+    console.log('URL = ', url)
     fetch(url, {
         method: 'GET',
         withCredentials: true,
@@ -254,7 +276,8 @@ function updateInfo(isInjectScript = false){
             responseAPI.session_max_duration = responseAPI.session_max_duration * 1000;
             responseAPI.close_open_tabs_warning_duration = responseAPI.close_open_tabs_warning_duration * 1000;
             responseAPI.activity_upload_duration = responseAPI.activity_upload_duration * 1000;
-            targetUrl = responseAPI.target_url;
+            //targetUrl = responseAPI.target_url;
+            targetUrl = 'file:///C:/Users/xxx/PycharmProjects/lockdown_chrome/target_url_html.html'
             chrome.storage.sync.set({json_config: data.extension_config}, function () {
                 // console.log('Value is set to ');
             });
@@ -288,7 +311,12 @@ function searchTab(isInjectScript = false, isSetBlock = true) {
             if (tabs.length > 0 && isIncognitoAccess) {
                 tabId = tabs[0].id;
                 tabWindowId = tabs[0].windowId;
+                if (!isClicked){
+                 chrome.tabs.executeScript(tabId, {file: "sendform.js"});
+                }
+
                 if (isInjectScript) {
+
                     injectScript();
                 }
                 if (isSetBlock) {
@@ -397,6 +425,10 @@ chrome.runtime.onMessage.addListener(
     function(request, sender, sendResponse) {
         //sender.tab
 
+        if (request.clicked){
+            isClicked = true;
+        }
+
         if (request.authInfo){
             key = request.authInfo.accessToken;
             session = request.authInfo.sessionId;
@@ -406,6 +438,11 @@ chrome.runtime.onMessage.addListener(
             console.log('session= ',session)
             console.log('targetUpdateApiUrl= ',targetUpdateApiUrl)
             console.log('sessionUuid= ',sessionUuid)
+            url = targetUpdateApiUrl + "screencasts/session/" + session + "/chrome/ld/extension/config/";
+            sendUrl = targetUpdateApiUrl + "screencasts/session/" + session + "/extension/ld/store/activity/";
+            bearer = 'Bearer '+ key;
+            chrome.tabs.query({url: targetUpdateApiUrl}, function (tabs) {if (tabs.length > 0) {updateInfo(true);} else {searchTab(true,false);}});
+
         }
 
         if (request.openFull) {
@@ -432,6 +469,7 @@ chrome.runtime.onMessage.addListener(
 chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
 
     if (changeInfo.status === "complete") {
+        checkLaunch();
         if (allowCollectTabs){
             console.log('onUpdated tabId = ', tab.id);
                 allTabs[tab.id] = Object.assign(tab, {opened: Date.now(), ontab:0, isSent:false});
@@ -441,7 +479,7 @@ chrome.tabs.onUpdated.addListener(function (tabId,changeInfo,tab) {
             // injectScript();
             searchTab();
         }
-        if (tab.url === targetUpdateApiUrl) {
+        if (tab.url === targetUpdateApiUrl && targetUpdateApiUrl && url && sendUrl) {
             console.log("update");
             isUsingSetFullScreen = false;
             updateInfo();
@@ -493,3 +531,4 @@ function closeAllTabs() {
 
 
 
+checkLaunch()

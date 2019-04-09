@@ -1,19 +1,18 @@
-
 if (res === undefined || res === null) {
     var res = {};
     let isSetButtonBlock = false;
     let isSetFullscreenBlock = false;
+
     /**
      * For those cases when the script was inject after loading this page
      */
     if (document.readyState === "complete") {
+
         addChromeRuntimeListener();
+
        
     }
 
-    window.onload = function() {
-         console.log('page loaded');
-      };
 
     addAllListener();
 
@@ -23,6 +22,7 @@ if (res === undefined || res === null) {
     function addAllListener() {
         window.onload = function () {
             addChromeRuntimeListener();
+
         };
 
         let isPressedControlLeft = false;
@@ -199,8 +199,9 @@ if (res === undefined || res === null) {
                 console.log(request);
                 if (request.setBlock !== undefined) {
                     chrome.storage.sync.get(['json_config'], function (result) {
-                        // console.log(result.json_config);
+                        console.log(result.json_config);
                         res = result.json_config;
+
                         if (request.setBlock && !window.location.href.indexOf(res.target_url) && !isSetButtonBlock) {
                             if (res.is_close_open_tabs_windows) {
                                 showModalWindow(true);
