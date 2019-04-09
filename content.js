@@ -7,12 +7,8 @@ if (res === undefined || res === null) {
      * For those cases when the script was inject after loading this page
      */
     if (document.readyState === "complete") {
-
         addChromeRuntimeListener();
-
-       
     }
-
 
     addAllListener();
 
@@ -62,11 +58,11 @@ if (res === undefined || res === null) {
                  * if is_keyboard_shortcut_disabled = true
                  * block F12 || ctr+U || ctr+shift+i || alt+cmd+i
                  */
-                // if (res.is_keyboard_shortcut_disabled && (e.code === "F12" ||
-                //     (isPressedControlLeft && (e.code === "KeyU" || (isPressedShift && e.code === "KeyI"))) || (isPressedAltLeft && isPressedCMD && e.code === "KeyI"))) {
-                //     e.preventDefault();
-                //     return false;
-                // }
+                if (res.is_keyboard_shortcut_disabled && (e.code === "F12" ||
+                    (isPressedControlLeft && (e.code === "KeyU" || (isPressedShift && e.code === "KeyI"))) || (isPressedAltLeft && isPressedCMD && e.code === "KeyI"))) {
+                    e.preventDefault();
+                    return false;
+                }
 
                 /**
                  * if is_printing_disabled = true

@@ -97,11 +97,8 @@ let timeOnTabStop = null;
  */
 let isIncognitoAccess = false;
 
-
 let isAuthInfoReceived = false;
 let isClicked = false;
-// chrome.tabs.query({url: targetUpdateApiUrl}, function (tabs) {if (tabs.length > 0) {updateInfo(true);} else {searchTab(true,false);}});
-
 
 
 /**
@@ -119,7 +116,6 @@ let isClicked = false;
 function checkLaunch(){
 
     if (!isAuthInfoReceived){
-
         fetch(authInfoUrl, {
             method: 'GET',
             withCredentials: false
@@ -276,8 +272,8 @@ function updateInfo(isInjectScript = false){
             responseAPI.session_max_duration = responseAPI.session_max_duration * 1000;
             responseAPI.close_open_tabs_warning_duration = responseAPI.close_open_tabs_warning_duration * 1000;
             responseAPI.activity_upload_duration = responseAPI.activity_upload_duration * 1000;
-            //targetUrl = responseAPI.target_url;
-            targetUrl = 'file:///C:/Users/xxx/PycharmProjects/lockdown_chrome/target_url_html.html'
+            targetUrl = responseAPI.target_url;
+            // targetUrl = 'file:///C:/Users/xxx/PycharmProjects/lockdown_chrome/target_url_html.html'
             chrome.storage.sync.set({json_config: data.extension_config}, function () {
                 // console.log('Value is set to ');
             });
